@@ -35,9 +35,9 @@ function init()
 {
 	// variables
 	global $wpdb, $path, $cpd_dir_name;
-	
+
 	define('CPD_METABOX', 'cpd_metaboxes');
-		
+
 	// multisite table names
 	foreach ( array('cpd_counter','cpd_counter_useronline','cpd_notes') as $t )
 	{
@@ -47,24 +47,24 @@ function init()
 
 	// use local time, not UTC
 	get_option('gmt_offset');
-	
+
 	$this->options = get_option('count_per_day');
-	
+
 	// manual debug mode
 	if (!empty($_GET['debug']) && WP_DEBUG )
 		$this->options['debug'] = 1;
 	$this->dir = plugins_url('/'.$cpd_dir_name);
-	
+
 	$this->queries[0] = 0;
 
 	// update online counter
 	add_action('wp', array(&$this,'deleteOnlineCounter'));
-	
+
 	// settings link on plugin page
 	add_filter('plugin_action_links', array(&$this,'pluginActions'), 10, 2);
-	
+
 	// auto counter
-	if ($this->options['autocount'])	
+	if ($this->options['autocount'])
 		add_action('wp', array(&$this,'count'));
 
 	// javascript to count cached posts
@@ -91,43 +91,43 @@ function init()
 		// check version
 		add_action('admin_head', array(&$this,'checkInstalledVersion'));
 	}
-	
+
 	// locale support
 	load_plugin_textdomain('cpd', false, $cpd_dir_name.'/locale');
-		 
+
 	// adds stylesheet
 	if (is_admin())
 		add_action('admin_head', array(&$this,'addCss'));
 	if ( empty($this->options['no_front_css']) )
 		add_action('wp_head', array(&$this,'addCss'));
-	
+
 	// widget setup
 	add_action('widgets_init', array( &$this,'register_widgets'));
-	
+
 	// activation hook
 	register_activation_hook(ABSPATH.PLUGINDIR.'/count-per-day/counter.php', array(&$this,'checkVersion'));
-	
+
 	// update hook
 	if (function_exists('register_update_hook'))
 		register_update_hook(ABSPATH.PLUGINDIR.'/count-per-day/counter.php', array(&$this,'checkVersion'));
-	
+
 	// uninstall hook
 	register_uninstall_hook($path.'counter.php', 'count_per_day_uninstall');
-	
+
 	// query times debug
 	if ($this->options['debug'])
 	{
 		add_action('wp_footer', array(&$this,'showQueries'));
 		add_action('admin_footer', array(&$this,'showQueries'));
 	}
-	
+
 	// add shortcode support
 	$this->addShortcodes();
-	
+
 	// thickbox in backend only
 	if (strpos($_SERVER['SCRIPT_NAME'], '/wp-admin/') !== false )
 		add_action('admin_enqueue_scripts', array(&$this,'addThickbox'));
-	
+
 	$this->aton = 'INET_ATON';
 	$this->ntoa = 'INET_NTOA';
 
@@ -144,7 +144,7 @@ function init()
 function addCpdIncludes()
 {
 	global $count_per_day, $wpdb, $cpd_geoip, $cpd_geoip_dir;
-	
+
 	if (empty($_GET['page']))
 		return;
 
@@ -207,7 +207,7 @@ function mysqlQuery( $kind = '', $sql = '', $func = '' )
 	if (empty($sql))
 		return;
 	$t = microtime(true);
-	
+
 	if ( is_array($sql) )
 	{
 		$sql = array_shift($sql);
@@ -216,10 +216,10 @@ function mysqlQuery( $kind = '', $sql = '', $func = '' )
 	}
 	else
 		$preparedSql = $sql;
-	
+
 	if (empty($preparedSql))
 		return;
-	
+
 	$r = false;
 	if ($kind == 'var')
 		$r = $wpdb->get_var( $preparedSql );
@@ -241,7 +241,7 @@ function mysqlQuery( $kind = '', $sql = '', $func = '' )
 		$this->queries[] = $func." : <b>$d</b> - $m<br/><code>$kind - $preparedSql</code><br/>$error";
 		$this->queries[0] += $d;
 	}
-	
+
 	return $r;
 }
 
@@ -271,7 +271,7 @@ function anonymize_ip( $ip )
 	// only IPv4
 	if( !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) )
 		return $ip;
-	
+
 	if ( $this->options['debug'] )
 		$this->queries[] = 'called Function: <b style="color:blue">anonymize_ip</b> IP: <code>'.$ip.'</code>';
 	if ($this->options['anoip'])
@@ -283,7 +283,7 @@ function anonymize_ip( $ip )
 			if ( $i[3] > 255 )
 				$i[3] -= 255;
 		}
-		return implode('.', $i);	
+		return implode('.', $i);
 	}
 	else
 		return $ip;
@@ -323,7 +323,7 @@ function getPostID()
 			$this->queries[] = 'called Function: <b style="color:blue">getPostID</b> page ID: <code>'.$p.'</code>';
 		return $p;
 	endif;
-	
+
 	return false;
 }
 
@@ -346,7 +346,7 @@ function isBot( $client = '', $bots = '', $ip = '', $ref = '' )
 	// empty/short client -> not normal browser -> bot
 	if ( empty($client) || strlen($client) < 20 )
 		return true;
-	
+
 	if (empty($bots))
 		$bots = explode( "\n", $this->options['bots'] );
 
@@ -361,7 +361,7 @@ function isBot( $client = '', $bots = '', $ip = '', $ref = '' )
 					$ip == $b
 					|| strpos( $ip, $b ) === 0
 					|| strpos( strtolower($client), strtolower($b) ) !== false
-					|| strpos( strtolower($ref), strtolower($b) ) !== false 
+					|| strpos( strtolower($ref), strtolower($b) ) !== false
 				)
 			)
 				$isBot = true;
@@ -371,7 +371,7 @@ function isBot( $client = '', $bots = '', $ip = '', $ref = '' )
 }
 
 /**
- * checks installation in sub blogs 
+ * checks installation in sub blogs
  */
 function checkVersion()
 {
@@ -391,7 +391,7 @@ function checkVersion()
 			}
 			switch_to_blog($old_blog);
 			return;
-		}	
+		}
 	}
 	// create tables in main blog
 	$this->createTables();
@@ -405,7 +405,7 @@ function createTables()
 	global $wpdb;
 	// for plugin activation, creates $wpdb
 	require_once(ABSPATH.'wp-admin/includes/upgrade.php');
-	
+
 	// variables for subblogs
 	$cpd_c = $wpdb->cpd_counter;
 	$cpd_o = $wpdb->cpd_counter_useronline;
@@ -415,7 +415,7 @@ function createTables()
 		$charset_collate = "DEFAULT CHARACTER SET $wpdb->charset";
 	if (!empty ($wpdb->collate))
 		$charset_collate .= " COLLATE $wpdb->collate";
- 	
+
 	// table "counter"
 	$sql = "CREATE TABLE IF NOT EXISTS `$cpd_c` (
 	`id` int(10) NOT NULL auto_increment,
@@ -430,7 +430,7 @@ function createTables()
 	KEY `idx_dateip` (`date`,`ip`) )
 	$charset_collate";
 	$this->mysqlQuery('', $sql, 'createTables '.__LINE__);
-	
+
 	// update fields in old table
 	$field = $this->mysqlQuery('rows', "SHOW FIELDS FROM `$cpd_c` LIKE 'ip'", 'createTables '.__LINE__);
 	$row = $field[0];
@@ -449,13 +449,13 @@ function createTables()
 		foreach ($queries as $sql)
 			$this->mysqlQuery('', $sql, 'update old fields '.__LINE__);
 	}
-	
+
 	// change textfield limit
 	$sql = "ALTER TABLE `$cpd_c`
 		CHANGE `client` `client` VARCHAR( 500 ) NOT NULL ,
 		CHANGE `referer` `referer` VARCHAR( 500 ) NOT NULL;";
 	$this->mysqlQuery('', $sql, 'change textfield limit '.__LINE__);
-	
+
 	// make new keys
 	$keys = $this->mysqlQuery('rows', "SHOW KEYS FROM `$cpd_c`", 'make keys '.__LINE__);
 	$s = array();
@@ -463,16 +463,16 @@ function createTables()
 		if ( $row->Key_name != 'PRIMARY' )
 			$s[] = "DROP INDEX `$row->Key_name`";
 	$s = array_unique($s);
-		
-	$sql = "ALTER TABLE `$cpd_c` "; 
+
+	$sql = "ALTER TABLE `$cpd_c` ";
 	if (sizeof($s))
 		$sql .= implode(',', $s).', ';
 	$sql .= 'ADD KEY `idx_dateip` (`date`,`ip`), ADD KEY `idx_page` (`page`)';
 	$this->mysqlQuery('', $sql, 'make keys '.__LINE__);
-	
+
 	// delete table "counter-online", since v3.0
 	$this->mysqlQuery('', "DROP TABLE IF EXISTS `$cpd_o`", 'table online '.__LINE__);
-			
+
 	// delete table "notes", since v3.0
 	if (!get_option('count_per_day_notes'))
 	{
@@ -487,7 +487,7 @@ function createTables()
 		}
 	}
 	$this->mysqlQuery('', "DROP TABLE IF EXISTS `$cpd_n`", 'table notes '.__LINE__);
-	
+
 	// update options to array
 	$this->updateOptions();
 }
@@ -499,7 +499,7 @@ function register_widgets()
 {
 	register_widget('CountPerDay_Widget');
 	register_widget('CountPerDay_PopularPostsWidget');
-	
+
 }
 
 /**
@@ -508,10 +508,10 @@ function register_widgets()
 function showQueries()
 {
 	global $wpdb, $cpd_path, $cpd_version, $cpd_geoip_dir;
-	
+
 	$serverinfo = (isset($wpdb->dbh->server_info)) ? $wpdb->dbh->server_info : mysqli_get_server_info($wpdb->dbh);
 	$clientinfo = (isset($wpdb->dbh->client_info)) ? $wpdb->dbh->client_info : mysqli_get_client_info();
-	
+
 	echo '<div style="position:absolute;margin:10px;padding:10px;border:1px red solid;background:#fff;clear:both">
 		<b>Count per Day - DEBUG: '.round($this->queries[0], 3).' s</b><ol>'."\n";
 	echo '<li>'
@@ -545,7 +545,7 @@ function showQueries()
 			echo "\n<li>$q</li>";
 	echo "</ol>\n";
 	?>
-	<p>GeoIP: 
+	<p>GeoIP:
 		dir=<?php echo substr(decoct(fileperms($cpd_geoip_dir)), -3) ?>
 		file=<?php echo (is_file($cpd_geoip_dir.'GeoIP.dat')) ? substr(decoct(fileperms($cpd_geoip_dir.'GeoIP.dat')), -3) : '-'; ?>
 		fopen=<?php echo (function_exists('fopen')) ? 'true' : 'false' ?>
@@ -563,7 +563,7 @@ function addCss()
 {
 	global $text_direction;
 	echo "\n".'<link rel="stylesheet" href="'.$this->dir.'/counter.css" type="text/css" />'."\n";
-	if ( $text_direction == 'rtl' ) 
+	if ( $text_direction == 'rtl' )
 		echo "\n".'<link rel="stylesheet" href="'.$this->dir.'/counter-rtl.css" type="text/css" />'."\n";
 	// thickbox style here because add_thickbox() breaks RTL in he_IL
 	if ( strpos($_SERVER['SCRIPT_NAME'], '/wp-admin/') !== false )
@@ -615,27 +615,27 @@ JSEND;
 function cleanDB()
 {
 	global $wpdb;
-	
+
 	// get trimed bot array
 	function trim_value(&$value) { $value = trim($value); }
 	$bots = explode( "\n", $this->options['bots'] );
 	array_walk($bots, 'trim_value');
-	
+
 	$rows_before = $this->mysqlQuery('var', "SELECT COUNT(*) FROM $wpdb->cpd_counter", 'cleanDB '.__LINE__);
 
 	// delete by ip
 	foreach( $bots as $ip )
 		if ( intval($ip) > 0 )
 			$this->mysqlQuery('', "DELETE FROM $wpdb->cpd_counter WHERE {$this->ntoa}(ip) LIKE '".$ip."%'", 'clenaDB_ip '.__LINE__);
-	
+
 	// delete by client
 	foreach ($bots as $bot)
 		if ( intval($bot) == 0 )
 			$this->mysqlQuery('', "DELETE FROM $wpdb->cpd_counter WHERE client LIKE '%".$bot."%'", 'cleanDB_client '.__LINE__);
-	
+
 	// delete if a previously countered page was deleted
 	$this->mysqlQuery('', "DELETE FROM $wpdb->cpd_counter WHERE page NOT IN ( SELECT id FROM $wpdb->posts) AND page > 0", 'cleanDB_delPosts '.__LINE__);
-	
+
 	$rows_after = $this->mysqlQuery('var', "SELECT COUNT(*) FROM $wpdb->cpd_counter", 'cleanDB '.__LINE__);
 	return $rows_before - $rows_after;
 }
@@ -653,7 +653,7 @@ function menu($content)
 		add_options_page('CountPerDay', $menutitle, 'manage_options', $cpd_dir_name.'/counter-options.php') ;
 	}
 }
-	
+
 /**
  * adds an "settings" link to the plugins page
  */
@@ -675,7 +675,7 @@ function pluginActions($links, $file)
 function updateOptions()
 {
 	global $cpd_version;
-	
+
 	$o = get_option('count_per_day', array());
 	$this->options = array('version' => $cpd_version);
 	$odefault = array(
@@ -739,7 +739,7 @@ function img( $r )
 
 /**
  * sets columns on dashboard page
- */ 
+ */
 function screenLayoutColumns($columns, $screen)
 {
 	if ( isset($this->pagehook) && $screen == $this->pagehook )
@@ -748,7 +748,7 @@ function screenLayoutColumns($columns, $screen)
 }
 
 /**
- * extends the admin menu 
+ * extends the admin menu
  */
 function setAdminMenu()
 {
@@ -843,7 +843,7 @@ function onShowPage()
 			<div class="postbox-container" <?php echo $css; ?>><?php do_meta_boxes($this->pagehook, 'cpdrow3', $data); ?></div>
 			<div class="postbox-container" <?php echo $css; ?>><?php do_meta_boxes($this->pagehook, 'cpdrow4', $data); ?></div>
 			<br class="clear"/>
-		</div>	
+		</div>
 	</div>
 	<script type="text/javascript">
 	//<![CDATA[
@@ -1000,10 +1000,10 @@ function export( $days = 180 )
 	$t = $wpdb->cpd_counter;
 	$tname = $t.'_last_'.$days.'_days_'.date_i18n('Y-m-d_H-i-s').'.csv';
 	$path = tempnam(sys_get_temp_dir(), 'cpdexport');
-	
+
 	// open file
 	$f = fopen($path,'w');
-	
+
 	if (!$f) :
 		echo '<div class="error"><p>'.__('Export failed! Cannot open file.', 'cpd').' '.$path.'.</p></div>';
 	else :
@@ -1014,9 +1014,9 @@ function export( $days = 180 )
 		$freeMemory = ($this->getBytes(ini_get('memory_limit')) - memory_get_usage()) - 8000000;
 		$part = min(array( round($freeMemory/1000000)*500, $part ));
 		$start = 0;
-		
+
 		fwrite($f, "date;ip;country;client;referer;post_cat_id;post_name;cat_tax_name;tax\r\n");
-		
+
 		do
 		{
 			$sql = "SELECT	c.*,
@@ -1046,26 +1046,26 @@ function export( $days = 180 )
 				if($row['client'][0] === "=" || $row['client'][0] === "+" || $row['client'][0] === "-" || $row['client'][0] === "@"){
 					$row['client'] = "'".$row['client'];
 				}
-				
+
 				$line = '"'.$row['date'].'";"'.long2ip($row['ip']).'";"'.$row['country'].'";"'
 					.str_replace('"', ' ', $row['client']).'";"'.str_replace('"', ' ', $row['referer']).'";"'
 					.abs($row['page']).'";"'.str_replace('"', ' ', $row['post']).'";"'.str_replace('"', ' ', $row['tag_cat_name']).'";"'.$row['tax'].'"'."\r\n";
-				
+
 				fwrite($f, $line);
 			}
 			$start += $part;
 		}
 		while (count($rows) == $part);
-		
-		fclose($f);		
-		
+
+		fclose($f);
+
 		// show download link
 		$tfile = basename($path);
 		echo '<div class="updated"><p>';
 		_e('Download the export file:', 'cpd');
 		echo ' <a href="index.php?page=cpd_download&amp;f='.$tfile.'&amp;n='.$tname.'">'.$tname.'</a><br/>';
 		echo '</p></div>';
-		
+
 	endif;
 }
 
@@ -1076,7 +1076,7 @@ function export( $days = 180 )
 function backup()
 {
 	global $wpdb;
-	
+
 	$t = $wpdb->cpd_counter;
 	$gz = ( function_exists('gzopen') && is_writable(WP_CONTENT_DIR) ) ? 1 : 0;
 	$tname = $t.'_backup_'.date_i18n('Y-m-d_H-i-s').'.sql';
@@ -1085,16 +1085,16 @@ function backup()
 
 	// wp-content or tempdir?
 	$path = ( empty($_POST['downloadonly']) && is_writable(WP_CONTENT_DIR) ) ? WP_CONTENT_DIR.$name : tempnam(sys_get_temp_dir(), 'cpdbackup');
-	
+
 	// open file
 	$f = ($gz) ? gzopen($path,'w9') : fopen($path,'w');
-	
+
 	if (!$f) :
 		echo '<div class="error"><p>'.__('Backup failed! Cannot open file', 'cpd').' '.$path.'.</p></div>';
 	else :
 		set_time_limit(300);
 		$this->flush_buffers();
-		
+
 		// write backup to file
 		$d = '';
 		($gz) ? gzwrite($f, $d) : fwrite($f, $d);
@@ -1106,7 +1106,7 @@ function backup()
 			$line = str_replace("\n", "", $create->{'Create Table'})."\n";
 			($gz) ? gzwrite($f, $line) : fwrite($f, $line);
 			$line = false;
-			
+
 			// number of entries
 			$entries = $this->mysqlQuery('count', "SELECT 1 FROM `$t`", 'backupCollect'.__LINE__);
 			$part = (int) $this->options['backup_part'];
@@ -1119,7 +1119,7 @@ function backup()
 			// show progress
 			echo '<div id="cpd_progress" class="updated"><p>'.sprintf(__('Backup of %s entries in progress. Every point comprises %s entries.', 'cpd'), $entries, $part).'<br />';
 			$this->flush_buffers();
-			
+
 			// get data
 			for ($i = 0; $i <= $entries; $i = $i + $part)
 			{
@@ -1128,11 +1128,11 @@ function backup()
 					foreach ($data as $row)
 					{
 						$row = (array) $row;
-						
+
 						// columns names
 						if (empty($cols))
 							$cols = array_keys($row);
-						
+
 						// create line
 						if (!$line)
 						{
@@ -1140,13 +1140,13 @@ function backup()
 							if (isset($v))
 								$line .= "$v\n";
 						}
-							
+
 						// add values
 						$v = '';
 						foreach ($row as $val)
 							$v .= "'".esc_sql($val)."',";
 						$v = '('.substr($v,0,-1).'),';
-						
+
 						if ( strlen($line) < 50000 - strlen($v) )
 							$line .= "$v\n";
 						else
@@ -1160,37 +1160,37 @@ function backup()
 				echo '| ';
 				$this->flush_buffers();
 			}
-			
+
 			// write leftover
 			if ($line)
 			{
 				$line = substr($line,0,-2).";\n";
 				($gz) ? gzwrite($f, $line) : fwrite($f, $line);
 			}
-			
+
 			// reindex command
 			$line = "REPAIR TABLE `$t`;";
-			($gz) ? gzwrite($f, $line) : fwrite($f, $line); 
+			($gz) ? gzwrite($f, $line) : fwrite($f, $line);
 
 			echo '</p></div>';
-			
+
 			// hide progress
 			echo '<script type="text/javascript">'
 				.'document.getElementById("cpd_progress").style.display="none";'
 				.'</script>'."\n";
 			$this->flush_buffers();
 		}
-		
+
 		// close file
 		($gz) ? gzclose($f) : fclose($f);
-		
+
 		// save collection and options
 		$toname = 'count_per_day_options_'.date_i18n('Y-m-d_H-i-s').'.txt';
 		if ($gz) $toname .= '.gz';
 		$oname = '/'.$toname;
 		$opath = ( empty($_POST['downloadonly']) && is_writable(WP_CONTENT_DIR) ) ? WP_CONTENT_DIR.$oname : tempnam(sys_get_temp_dir(), 'cpdbackup');
 		$f = ($gz) ? gzopen($opath,'w9') : fopen($opath,'w');
-		
+
 		foreach (array('count_per_day', 'count_per_day_summary', 'count_per_day_collected', 'count_per_day_posts', 'count_per_day_notes') as $o)
 		{
 			$c = get_option($o);
@@ -1198,7 +1198,7 @@ function backup()
 			($gz) ? gzwrite($f, $line) : fwrite($f, $line);
 		}
 		($gz) ? gzclose($f) : fclose($f);
-		
+
 		// message
 		echo '<div class="updated"><p>';
 		if ( strpos($path, WP_CONTENT_DIR) === false )
@@ -1233,19 +1233,19 @@ function backup()
 function restore ()
 {
 	global $wpdb;
-	
+
 	if ( empty($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'cpdnonce')
 		|| ( empty($_GET['cpdrestore']) && empty($_GET['cpdadding']) ) )
 		return;
-	
+
 	$doadding = (isset($_GET['cpdadding'])) ? 1 : 0;
 	$path = WP_CONTENT_DIR.'/'.(($doadding) ? $_GET['cpdadding'] : $_GET['cpdrestore']);
-	
+
 	if ( isset($path) && preg_match('/count_per_day|cpd_counter/i', $path) && file_exists($path) )
 	{
 		$gz = (substr($path, -3) == '.gz') ? 1 : 0;
 		$f = ($gz) ? gzopen($path, 'r') : fopen($path, 'r');
-	
+
 		if ( strpos($path, 'counter_backup') )
 		{
 			// counter table
@@ -1328,7 +1328,7 @@ function addCollectionToCountries( $visitors, $limit = false )
 	$temp = array();
 	foreach ( $res as $r )
 		$temp[$r->country] = $r->c;
-		
+
 	// add collection values
 	$coll = get_option('count_per_day_collected');
 	if ($coll)
@@ -1336,7 +1336,7 @@ function addCollectionToCountries( $visitors, $limit = false )
 		foreach ($coll as $month)
 		{
 			$countries = explode(';', $month['country']);
-			// country:reads|visitors	
+			// country:reads|visitors
 			foreach ($countries as $v)
 			{
 				if (!empty($v))
@@ -1353,13 +1353,13 @@ function addCollectionToCountries( $visitors, $limit = false )
 			}
 		}
 	}
-	
+
 	// max $limit biggest values
 	$keys = array_keys($temp);
 	array_multisort($temp, SORT_NUMERIC, SORT_DESC, $keys);
 	if ($limit)
 		$temp = array_slice($temp, 0, $limit);
-	
+
 	return $temp;
 }
 
@@ -1514,7 +1514,7 @@ function flush_buffers()
  */
 function getBytes($val) {
     $val = trim($val);
-    $last = strtolower($val{strlen($val)-1});
+    $last = strtolower($val[strlen($val)-1]);
     switch($last) {
         case 'g':
             $val *= 1024;
@@ -1580,7 +1580,7 @@ function cpdColumnContent($column_name, $id = 0)
 function loadGeoIpAddon()
 {
 	global $cpd_path, $cpd_geoip_dir;
-	
+
 	// create dir
 	if (!is_dir($cpd_geoip_dir))
 		if (!mkdir($cpd_geoip_dir))
@@ -1588,7 +1588,7 @@ function loadGeoIpAddon()
 			echo '<div class="error"><p>'.sprintf(__('Could not create directory %s!', 'cpd'), '<code>wp-content/count-per-day-geoip</code>').'</p></div>';
 			return false;
 		};
-		
+
 	// function checks
 	if ( !ini_get('allow_url_fopen') )
 	{
@@ -1598,14 +1598,14 @@ function loadGeoIpAddon()
 
 	$source = 'https://raw.githubusercontent.com/maxmind/geoip-api-php/master/src/geoip.inc';
 	$dest = $cpd_geoip_dir.'geoip.inc';
-	
+
 	// get remote file
 	$file = file_get_contents($source, 'r');
-	
+
 	// write new locale file
 	if ( is_writable($cpd_geoip_dir) )
 		file_put_contents($dest, $file);
-	
+
 	if (is_file($dest))
 	{
 		@chmod($dest, 0755);
@@ -1618,7 +1618,7 @@ function loadGeoIpAddon()
 /**
  * Windows server < PHP 5.3
  * PHP without IPv6 support
- */ 
+ */
 static function inetPton($ip)
 {
 	// convert to IPv6 e.g. '::62.149.142.175' or '62.149.142.175'
@@ -1629,7 +1629,7 @@ static function inetPton($ip)
 		$ip = explode('.', $ip);
 		$ip = '::FFFF:'.sprintf("%'.02s", dechex($ip[0])).sprintf("%'.02s", dechex($ip[1])).':'.sprintf("%'.02s", dechex($ip[2])).sprintf("%'.02s", dechex($ip[3]));
 	}
-	
+
 	// IPv6
 	if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6))
 	{
@@ -1655,7 +1655,7 @@ static function inetPton($ip)
 	else
 		// Dummy IP if no valid IP found
 		$ip = inetPton('127.0.0.1');
-	
+
 	return $ip;
 }
 
